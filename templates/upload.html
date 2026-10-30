@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Dataset upload{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">DATASET MANAGEMENT</p><h1>Upload & prepare</h1><p class="page-subtitle">Import an offline CSV dataset and choose its ground-truth label.</p></div></div>
+<div class="upload-layout">
+  <section class="panel upload-panel">
+    {% if columns %}
+      <div class="panel-heading"><div><h2>Dataset ready</h2><p>{{ dataset_name }}</p></div><span class="file-badge">CSV</span></div>
+      <div class="dataset-stats"><div><span>RECORDS</span><strong>{{ "{:,}".format(record_count) }}</strong></div><div><span>COLUMNS</span><strong>{{ columns|length }}</strong></div></div>
+      <div class="column-list"><h3>Available columns</h3><div class="chip-list">{% for column in columns %}<span class="chip">{{ column }}</span>{% endfor %}</div></div>
+      <form action="{{ url_for('train') }}" method="post" class="form-stack">
+        <input type="hidden" name="dataset_name" value="{{ dataset_name }}">
+        <label for="target_column">Target / label column</label>
+        <select name="target_column" id="target_column" required>
+          <option value="">Choose a column</option>
+          {% for column in columns %}<option value="{{ column }}" {% if column == target_suggestion %}selected{% endif %}>{{ column }}{% if column == target_suggestion %} · suggested{% endif %}</option>{% endfor %}
+        </select>
+        <p class="field-help">Choose the column containing ground-truth classes such as BENIGN / attack names or 0 / 1. Confirm the suggestion before training.</p>
+        <button class="button" type="submit">Train & evaluate model <span>→</span></button>
+      </form>
+    {% else %}
+      <div class="upload-icon">⇧</div><h2>Choose a traffic dataset</h2><p class="muted">CSV files only · Maximum 50 MB · Up to 200,000 rows</p>
+      <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="form-stack">
+        <label class="dropzone" for="dataset"><span class="drop-icon">＋</span><strong>Browse for a CSV file</strong><small id="file-name">or select a file from your computer</small><input id="dataset" name="dataset" type="file" accept=".csv,text/csv" required></label>
+        <button class="button" type="submit">Validate dataset <span>→</span></button>
+      </form>
+      <div class="upload-safety"><span>ⓘ</span><p>Files are processed locally by this application. Only upload datasets you are authorized to analyze. The project does not capture live traffic.</p></div>
+      <div class="demo-divider"><span>OR</span></div>
+      <div class="demo-option"><div><strong>No dataset to try?</strong><p>Explore the workflow using clearly labeled toy data.</p></div><form action="{{ url_for('demo') }}" method="post"><button class="button button-secondary" type="submit">Run synthetic demo</button></form></div>
+    {% endif %}
+  </section>
+  <aside class="panel side-info"><p class="eyebrow">WHAT HAPPENS NEXT</p><div class="info-step"><span>1</span><div><strong>Validate</strong><p>Check CSV structure, size, and target labels.</p></div></div><div class="info-step"><span>2</span><div><strong>Prepare</strong><p>Clean invalid values and exclude label leakage and identifiers.</p></div></div><div class="info-step"><span>3</span><div><strong>Evaluate</strong><p>Train a Random Forest and calculate metrics on held-out records.</p></div></div><div class="warning-note"><strong>Interpret carefully</strong><p>Suspicious means a model prediction. It is not a confirmed incident or a guarantee of detection.</p></div></aside>
+</div>
+{% endblock %}

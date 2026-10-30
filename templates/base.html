@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <title>{% block title %}Traffic Sentinel{% endblock %} | Traffic Sentinel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-mark">TS</span>
+        <span><strong>Traffic Sentinel</strong><small>OFFLINE THREAT LAB</small></span>
+      </a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav aria-label="Main navigation">
+        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}"><span>◫</span> Overview</a>
+        <a class="nav-link {% if request.endpoint == 'upload' %}active{% endif %}" href="{{ url_for('upload') }}"><span>⇧</span> Dataset upload</a>
+        <a class="nav-link {% if request.endpoint == 'analysis' %}active{% endif %}" href="{{ url_for('analysis') }}"><span>⌁</span> Traffic analysis</a>
+        <a class="nav-link {% if request.endpoint == 'predict' %}active{% endif %}" href="{{ url_for('predict') }}"><span>▶</span> Run predictions</a>
+        <a class="nav-link {% if request.endpoint == 'threats' %}active{% endif %}" href="{{ url_for('threats') }}"><span>⚑</span> Threat detection</a>
+        <a class="nav-link {% if request.endpoint == 'performance' %}active{% endif %}" href="{{ url_for('performance') }}"><span>▥</span> Model performance</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note">
+        <span class="status-dot"></span>
+        <div><strong>Dataset mode</strong><small>No live traffic collection</small></div>
+      </div>
+      <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}"><span>ⓘ</span> About the project</a>
+      <div class="sidebar-footer">ACADEMIC PROJECT · LOCAL ANALYSIS</div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="brand-mark">TS</span> Traffic Sentinel</div>
+        <div class="topbar-context"><span class="status-dot"></span> Local analysis environment</div>
+        <a class="button button-small" href="{{ url_for('upload') }}">＋ <span>Analyze dataset</span></a>
+      </header>
+      <section class="page-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}" role="status">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

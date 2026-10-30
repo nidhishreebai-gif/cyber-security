@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">SECURITY OPERATIONS · DATASET INSIGHTS</p><h1>Overview</h1><p class="page-subtitle">A clear view of your offline traffic classification results.</p></div>
+  <a class="button" href="{{ url_for('upload') }}">＋ Upload dataset</a>
+</div>
+{% if results %}
+  {% if results.synthetic_demo %}<div class="notice warning"><strong>SYNTHETIC DEMONSTRATION</strong><span>All metrics and records come from generated toy data. They are not real network traffic and must not be used as evidence of cybersecurity detection performance.</span></div>{% endif %}
+  <div class="notice info"><strong>Evaluation view</strong><span>{{ results.dataset_name }} · Counts and alerts below use only the held-out test partition; they are model predictions, not confirmed incidents.</span></div>
+  <div class="metric-grid">
+    <article class="metric-card"><span class="metric-label">TEST RECORDS ANALYZED</span><strong>{{ results.records_analyzed }}</strong><span class="metric-foot">Held-out data</span></article>
+    <article class="metric-card"><span class="metric-label">PREDICTED NORMAL</span><strong>{{ results.normal_count }}</strong><span class="metric-foot"><i class="legend-dot normal"></i> Normal classification</span></article>
+    <article class="metric-card alert-card"><span class="metric-label">PREDICTED SUSPICIOUS</span><strong>{{ results.suspicious_count }}</strong><span class="metric-foot"><i class="legend-dot suspicious"></i> Requires human review</span></article>
+    <article class="metric-card"><span class="metric-label">TEST ACCURACY</span><strong>{{ "%.1f"|format(results.metrics.accuracy * 100) }}<small>%</small></strong><span class="metric-foot">Not sufficient alone for imbalanced data</span></article>
+  </div>
+  <div class="content-grid">
+    <article class="panel chart-panel"><div class="panel-heading"><div><h2>Traffic classification</h2><p>Held-out records grouped by model prediction</p></div><span class="panel-icon">◔</span></div><div class="chart-wrap"><canvas id="traffic-chart" aria-label="Normal and suspicious traffic classification chart"></canvas></div></article>
+    <article class="panel summary-panel"><div class="panel-heading"><div><h2>Detection summary</h2><p>Current dataset run</p></div></div>
+      <div class="summary-row"><span>Selected target</span><strong>{{ results.target_column }}</strong></div>
+      <div class="summary-row"><span>Predictive features</span><strong>{{ results.feature_columns|length }}</strong></div>
+      <div class="summary-row"><span>Suspicious share</span><strong>{% if results.records_analyzed %}{{ "%.1f"|format(results.suspicious_count / results.records_analyzed * 100) }}%{% else %}0.0%{% endif %}</strong></div>
+      <div class="summary-row"><span>Evaluation split</span><strong>75% / 25%</strong></div>
+      <a class="text-link" href="{{ url_for('performance') }}">Review model metrics <span>→</span></a>
+    </article>
+  </div>
+  <article class="panel table-panel"><div class="panel-heading"><div><h2>Recent suspicious records</h2><p>Predictions from the held-out test partition</p></div><a class="text-link" href="{{ url_for('threats') }}">View all <span>→</span></a></div>
+    {% if suspicious_rows %}<div class="table-scroll"><table><thead><tr><th>Prediction</th><th>Actual class</th>{% for col in feature_columns[:4] %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in suspicious_rows %}<tr><td><span class="badge badge-danger">Suspicious</span></td><td>{{ row.get('Actual class', '—') }}</td>{% for col in feature_columns[:4] %}<td>{{ row.get(col, '—') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-inline">No suspicious predictions in the held-out records. This does not prove that the full dataset is threat-free.</div>{% endif %}
+  </article>
+{% else %}
+  <section class="hero-panel">
+    <div class="hero-copy"><span class="hero-kicker"><span class="status-dot"></span> OFFLINE · DATASET-BASED ANALYSIS</span><h2>Turn traffic records<br>into <em>clear signals.</em></h2><p>Train a reproducible Random Forest on your labeled flow data, inspect held-out detections, and review meaningful evaluation metrics—all in one local dashboard.</p><a class="button" href="{{ url_for('upload') }}">Start with a dataset <span>→</span></a><div class="hero-disclaimer">Predictions are decision support—not proof of a cyberattack.</div></div>
+    <div class="hero-visual" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="core-shield"><span>✓</span></div><div class="signal signal-a">FLOW ANALYSIS <b>●</b></div><div class="signal signal-b">RANDOM FOREST <b>●</b></div><div class="signal signal-c">LOCAL ONLY <b>●</b></div></div>
+  </section>
+  <div class="section-heading"><div><p class="eyebrow">GET STARTED</p><h2>From CSV to insight</h2></div><span class="muted">A transparent, repeatable workflow</span></div>
+  <div class="step-grid">
+    <article class="step-card"><span class="step-number">01</span><h3>Upload a labeled CSV</h3><p>Use CICIDS2017, UNSW-NB15, or another compatible flow dataset.</p></article>
+    <article class="step-card"><span class="step-number">02</span><h3>Select the label</h3><p>Review columns and choose the target column used for training.</p></article>
+    <article class="step-card"><span class="step-number">03</span><h3>Review held-out results</h3><p>Explore predictions and metrics from a reproducible test split.</p></article>
+  </div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+{% if results %}
+<script>
+  window.trafficChartData = {
+    labels: ["Normal", "Suspicious"],
+    values: [{{ results.normal_count }}, {{ results.suspicious_count }}]
+  };
+</script>
+{% endif %}
+{% endblock %}

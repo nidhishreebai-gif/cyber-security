@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Run predictions{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">SAVED MODEL INFERENCE</p><h1>Run predictions</h1><p class="page-subtitle">Classify a new feature CSV with the saved preprocessing and Random Forest pipeline.</p></div></div>
+<div class="notice info"><strong>No label required</strong><span>Provide the feature columns used during training. Extra columns are ignored; every trained feature must be present. No confidence score is shown.</span></div>
+<div class="upload-layout">
+  <section class="panel upload-panel">
+    <div class="panel-heading"><div><h2>Classify new records</h2><p>Predictions are model outputs, not confirmed incidents.</p></div><span class="file-badge">CSV</span></div>
+    {% if model_synthetic %}
+      <div class="notice warning"><strong>DEMO MODEL ONLY</strong><span>This saved model learned from synthetic toy data. It cannot be used to classify new records; train a model on a labeled dataset first.</span></div>
+      <a class="button" href="{{ url_for('upload') }}">Train on a labeled dataset</a>
+    {% elif model_available %}
+      <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" class="form-stack">
+        <label class="dropzone" for="dataset"><span class="drop-icon">⇧</span><strong>Choose feature CSV</strong><small id="file-name">The target column is not required</small><input id="dataset" name="dataset" type="file" accept=".csv,text/csv" required></label>
+        <button class="button" type="submit">Classify records <span>→</span></button>
+      </form>
+    {% else %}
+      <div class="empty-inline">No saved model is available yet. Train a model from a labeled dataset first.</div>
+      <p><a class="button" href="{{ url_for('upload') }}">Train a model</a></p>
+    {% endif %}
+  </section>
+  <aside class="panel side-info"><p class="eyebrow">MODEL REQUIREMENTS</p><div class="info-step"><span>1</span><div><strong>Same feature schema</strong><p>Use the feature columns retained during training, with matching names.</p></div></div><div class="info-step"><span>2</span><div><strong>Same preprocessing</strong><p>The saved model artifact includes the original imputation and encoding pipeline.</p></div></div><div class="warning-note"><strong>Review every alert</strong><p>Predictions may be wrong. Validate findings with authorized evidence and operational context.</p></div></aside>
+</div>
+{% if results %}
+  <section class="section-heading"><div><p class="eyebrow">LATEST RUN</p><h2>{{ results.dataset_name }}</h2></div></section>
+  <div class="metric-grid compact-grid"><article class="metric-card"><span class="metric-label">RECORDS CLASSIFIED</span><strong>{{ results.records_analyzed }}</strong></article><article class="metric-card"><span class="metric-label">NORMAL</span><strong>{{ results.normal_count }}</strong></article><article class="metric-card alert-card"><span class="metric-label">SUSPICIOUS</span><strong>{{ results.suspicious_count }}</strong></article><article class="metric-card"><span class="metric-label">SUSPICIOUS SHARE</span><strong>{% if results.records_analyzed %}{{ "%.1f"|format(results.suspicious_count / results.records_analyzed * 100) }}{% else %}0.0{% endif %}<small>%</small></strong></article></div>
+  <article class="panel table-panel"><div class="panel-heading"><div><h2>Prediction results</h2><p>Showing up to 500 input rows</p></div></div>
+    {% if rows %}<div class="table-scroll"><table><thead><tr><th>Prediction</th>{% for col in rows[0].keys() if col != 'Prediction' %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr><td><span class="badge {% if row.get('Prediction') == 'Suspicious' %}badge-danger{% else %}badge-safe{% endif %}">{{ row.get('Prediction', '—') }}</span></td>{% for col, value in row.items() if col != 'Prediction' %}<td>{{ value if value is not none else '—' }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-inline">No prediction records are available.</div>{% endif %}
+  </article>
+{% endif %}
+{% endblock %}

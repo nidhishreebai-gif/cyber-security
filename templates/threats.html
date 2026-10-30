@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Threat detection{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">ALERT REVIEW</p><h1>Threat detection</h1><p class="page-subtitle">Filter and inspect records predicted as suspicious.</p></div><span class="count-pill">{{ rows|length }} flagged</span></div>
+{% if results %}
+  <div class="notice warning"><strong>Model alert</strong><span>Suspicious classifications are indicators for review, not confirmed attacks. No email or SMS notifications are sent.</span></div>
+  <article class="panel table-panel"><div class="panel-heading"><div><h2>Suspicious predictions</h2><p>{{ rows|length }} held-out records classified as suspicious</p></div><div class="filter-control"><label for="threat-search">Search records</label><input id="threat-search" type="search" placeholder="Filter visible values"></div></div>
+  {% if rows %}<div class="table-scroll"><table id="threat-table"><thead><tr><th>Alert</th><th>Actual label</th>{% for col in feature_columns[:8] %}<th>{{ col }}</th>{% endfor %}</tr></thead><tbody>{% for row in rows %}<tr><td><span class="badge badge-danger">Suspicious</span></td><td>{{ row.get('Actual class', '—') }}</td>{% for col in feature_columns[:8] %}<td>{{ row.get(col, '—') }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state"><span>✓</span><h3>No suspicious predictions</h3><p>The current held-out partition contains no records predicted as suspicious. This does not establish that the full traffic dataset is threat-free.</p></div>{% endif %}
+  </article>
+{% else %}<div class="empty-state panel"><span>⚑</span><h2>No alert data yet</h2><p>Upload a labeled dataset to train and evaluate the classifier.</p><a class="button" href="{{ url_for('upload') }}">Upload dataset</a></div>{% endif %}
+{% endblock %}
